@@ -17,7 +17,7 @@ local function SendWebhook(title, description, color, fields, thumbnail, author)
             ["author"] = author or nil,
             ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ"),
             ["footer"] = {
-                ["text"] = "🏥 AI Doctor System | Bluewave Roleplay",
+                ["text"] = "🏥 AI Doctor System | Ascendant Roleplay",
                 ["icon_url"] = "https://cdn.discordapp.com/emojis/692428843058724864.png"
             },
         }
