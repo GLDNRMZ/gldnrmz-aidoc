@@ -5,7 +5,7 @@ Config = {}
 
 Config.Debug = false
 
-Config.Vehicle = "sandbulance"
+Config.Vehicle = "ambulance"
 
 Config.Doctor = 0           -- Minimum Amount of EMS on duty.
 Config.Price = 1000         -- Cost for AI Doc Services
