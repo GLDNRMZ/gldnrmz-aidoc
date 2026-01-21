@@ -8,7 +8,7 @@ Config.Debug = false
 Config.Vehicle = "ambulance"
 
 Config.Doctor = 0           -- Minimum Amount of EMS on duty.
-Config.Price = 1000         -- Cost for AI Doc Services
+Config.Price = 1500         -- Cost for AI Doc Services
 Config.ReviveTime = 10      -- Revive in seconds
 Config.TPTime = 60          -- Teleprt Time in seconds
 
