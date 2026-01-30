@@ -1,7 +1,7 @@
 <picture>
 	<source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/oc7sWCV.png">
 	<source media="(prefers-color-scheme: light)" srcset="https://i.imgur.com/oc7sWCV.png">
-	<img alt="AI Doctor System banner showing ambulance and paramedic NPCs" src="https://i.imgur.com/oc7sWCV.png" style="width:100%;max-width:900px;">
+	<img alt="AI Doctor System banner showing ambulance and paramedic NPCs" src="https://i.imgur.com/oc7sWCV.png" style="width:50%;max-width:100;">
 </picture>
 
 # gldnrmz-aidoc
