@@ -100,8 +100,8 @@ Config.Webhook = {
 - Redistribution only with original credit and license
 
 ## 🙏 Credit
-- Original Author: GLDNRMZ#8700 / HHFW / Sanriku / amrclake
-- [community_bridge](https://github.com/GLDNRMZ/community_bridge) by GLDNRMZ
+- Original Author: GLDNRMZ / HHFW / Sanriku / amrclake
+- [community_bridge](https://github.com/GLDNRMZ/community_bridge)
 
 ## 📄 License
 Attribution required. Do not redistribute or sell without explicit permission. Keep all author credits intact.
