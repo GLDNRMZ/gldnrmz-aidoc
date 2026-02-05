@@ -1,9 +1,3 @@
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/oc7sWCV.png">
-	<source media="(prefers-color-scheme: light)" srcset="https://i.imgur.com/oc7sWCV.png">
-	<img alt="AI Doctor System banner showing ambulance and paramedic NPCs" src="https://i.imgur.com/oc7sWCV.png" style="width:100%;max-width:900px;">
-</picture>
-
 # gldnrmz-aidoc
 AI Doctor System for FiveM. Provides an automated paramedic NPC and vehicle to revive players when EMS is unavailable. Designed for server owners and developers seeking a reliable, configurable fallback medical system.
 

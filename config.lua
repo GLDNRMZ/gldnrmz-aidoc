@@ -34,7 +34,7 @@ Config.EmergencyTimeout = 120  -- Time in seconds before emergency teleport (2 m
 
 Config.Webhook = {
     enabled = true,
-    url = "https://discord.com/api/webhooks/1468209435603111980/GYKEomRfE1coZIPQ61CrEKRPJzP35yJul0E4ztOZ8ZGhvzm73Lng3p8TPYpr4caOG0mc",
+    url = "",
     botName = "AI Doctor Bot",
     color = 3447003, -- Blue color
     avatar = "https://i.imgur.com/your-avatar.png" -- Optional avatar URL
