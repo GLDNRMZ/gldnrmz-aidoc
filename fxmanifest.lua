@@ -1,5 +1,7 @@
 fx_version 'adamant'
 
+version '1.0.0'
+
 game 'gta5'
 
 authors 'GLDNRMZ#8700 / HHFW / Sanriku / amrclake'
@@ -15,3 +17,7 @@ server_scripts {
 shared_scripts {
     'config.lua'
 } 
+
+dependencies {
+    'community_bridge'
+}

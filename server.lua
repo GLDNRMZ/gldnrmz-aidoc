@@ -1,4 +1,5 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+local Bridge = exports['community_bridge']:Bridge()
+
 
 -- Webhook Function
 local function SendWebhook(title, description, color, fields, thumbnail, author)
@@ -32,58 +33,87 @@ local function SendWebhook(title, description, color, fields, thumbnail, author)
     PerformHttpRequest(Config.Webhook.url, function(err, text, headers) end, 'POST', json.encode(payload), { ['Content-Type'] = 'application/json' })
 end
 
-QBCore.Functions.CreateCallback('lb:docOnline', function(source, cb)
-	local src = source
-	local Ply = QBCore.Functions.GetPlayer(src)
-	local xPlayers = QBCore.Functions.GetPlayers()
+Bridge.Callback.Register('aidoc:docOnline', function(src)
 	local doctor = 0
 	local canpay = false
-	if Ply.PlayerData.money["cash"] >= Config.Price then
+	local price = Config.Price or 0
+	local cash = Bridge.Framework.GetAccountBalance(src, 'cash') or 0
+	local bank = Bridge.Framework.GetAccountBalance(src, 'bank') or 0
+
+	if cash >= price or bank >= price then
 		canpay = true
-	else
-		if Ply.PlayerData.money["bank"] >= Config.Price then
-			canpay = true
+	end
+
+	local players = Bridge.Framework.GetPlayersByJob(Config.EMSJobName)
+	for i = 1, #players do
+		local jobData = Bridge.Framework.GetPlayerJobData(players[i])
+		if jobData and (jobData.onDuty == nil or jobData.onDuty) then
+			doctor = doctor + 1
 		end
 	end
 
-	for i=1, #xPlayers, 1 do
-        local xPlayer = QBCore.Functions.GetPlayer(xPlayers[i])
-        if xPlayer.PlayerData.job.name == 'ambulance' and xPlayer.PlayerData.job.onduty then
-            doctor = doctor + 1
-        end
-    end
-
-	cb(doctor, canpay)
+	return doctor, canpay
 end)
 
 RegisterServerEvent('lb:charge')
 AddEventHandler('lb:charge', function()
 	local src = source
-	local xPlayer = QBCore.Functions.GetPlayer(src)
-	if xPlayer.PlayerData.money["cash"] >= Config.Price then
-		xPlayer.Functions.RemoveMoney("cash", Config.Price, GetCurrentResourceName()..' - AI Doc Fees')
+	local price = Config.Price or 0
+	local cash = Bridge.Framework.GetAccountBalance(src, 'cash') or 0
+
+	if cash >= price then
+		Bridge.Framework.RemoveAccountBalance(src, 'cash', price)
 	else
-		xPlayer.Functions.RemoveMoney("bank", Config.Price, GetCurrentResourceName()..' - AI Doc Fees')
+		Bridge.Framework.RemoveAccountBalance(src, 'bank', price)
 	end
-	exports['Renewed-Banking']:addAccountMoney('ambulance', Config.Price, 'AI Doctor Service')
+
+	if Config.AddToSociety and Bridge.Managment and Bridge.Managment.AddAccountMoney then
+		Bridge.Managment.AddAccountMoney(Config.ServiceAccount, price, 'AI Doctor Service')
+	end
 end)
+
+RegisterNetEvent('aidoc:server:revive', function()
+	local src = source
+	if type(Config.AmbulanceScript) == "function" then
+		local ok, err = pcall(Config.AmbulanceScript, src)
+		if ok then
+			return
+		end
+		print("[gldnrmz-aidoc] Config.AmbulanceScript error: " .. tostring(err))
+	end
+
+	print("[gldnrmz-aidoc] No Config.AmbulanceScript set. Revive aborted.")
+end)
+
+local function GetPlayerInfo(src)
+	local first, last = Bridge.Framework.GetPlayerName(src)
+	local playerName = GetPlayerName(src) or 'Unknown'
+	local charName = string.format("%s %s", first or "Unknown", last or "")
+	local citizenid = Bridge.Framework.GetPlayerIdentifier(src) or 'Unknown'
+	local jobData = Bridge.Framework.GetPlayerJobData(src) or {}
+	local job = jobData.jobLabel or jobData.jobName or "Unemployed"
+	local cash = Bridge.Framework.GetAccountBalance(src, 'cash') or 0
+	local bank = Bridge.Framework.GetAccountBalance(src, 'bank') or 0
+	return {
+		playerName = playerName,
+		charName = charName,
+		citizenid = citizenid,
+		job = job,
+		cash = cash,
+		bank = bank
+	}
+end
 
 -- Webhook Events
 RegisterServerEvent('aidoc:webhook:helpCalled')
 AddEventHandler('aidoc:webhook:helpCalled', function()
 	local src = source
-	local xPlayer = QBCore.Functions.GetPlayer(src)
-	local playerName = xPlayer.PlayerData.name
-	local charName = xPlayer.PlayerData.charinfo.firstname .. " " .. xPlayer.PlayerData.charinfo.lastname
-	local citizenid = xPlayer.PlayerData.citizenid
-	local job = xPlayer.PlayerData.job.label or "Unemployed"
-	local cash = xPlayer.PlayerData.money.cash or 0
-	local bank = xPlayer.PlayerData.money.bank or 0
+	local info = GetPlayerInfo(src)
 	
 	local fields = {
 		{
 			["name"] = "👤 Player Information",
-			["value"] = "```\n" .. playerName .. "```\n**Character:** " .. charName .. "\n**Citizen ID:** `" .. citizenid .. "`\n**Job:** " .. job,
+			["value"] = "```\n" .. info.playerName .. "```\n**Character:** " .. info.charName .. "\n**Citizen ID:** `" .. info.citizenid .. "`\n**Job:** " .. info.job,
 			["inline"] = true
 		},
 		{
@@ -100,7 +130,7 @@ AddEventHandler('aidoc:webhook:helpCalled', function()
 	
 	SendWebhook(
 		"🚑 AI Doctor Called",
-		"**" .. charName .. "** requested AI Doctor services.",
+		"**" .. info.charName .. "** requested AI Doctor services.",
 		15158332, -- Red
 		fields,
 		"https://i.imgur.com/oc7sWCV.png",
@@ -111,16 +141,12 @@ end)
 RegisterServerEvent('aidoc:webhook:playerHealed')
 AddEventHandler('aidoc:webhook:playerHealed', function()
 	local src = source
-	local xPlayer = QBCore.Functions.GetPlayer(src)
-	local playerName = xPlayer.PlayerData.name
-	local charName = xPlayer.PlayerData.charinfo.firstname .. " " .. xPlayer.PlayerData.charinfo.lastname
-	local citizenid = xPlayer.PlayerData.citizenid
-	local job = xPlayer.PlayerData.job.label or "Unemployed"
+	local info = GetPlayerInfo(src)
 	
 	local fields = {
 		{
 			["name"] = "👤 Patient Information",
-			["value"] = "```\n" .. playerName .. "```\n**Character:** " .. charName .. "\n**Citizen ID:** `" .. citizenid .. "`\n**Job:** " .. job,
+			["value"] = "```\n" .. info.playerName .. "```\n**Character:** " .. info.charName .. "\n**Citizen ID:** `" .. info.citizenid .. "`\n**Job:** " .. info.job,
 			["inline"] = true
 		},
 		{
@@ -142,7 +168,7 @@ AddEventHandler('aidoc:webhook:playerHealed', function()
 	
 	SendWebhook(
 		"✅ Player Healed",
-		"**" .. charName .. "** was successfully treated by AI Doctor.",
+		"**" .. info.charName .. "** was successfully treated by AI Doctor.",
 		3066993, -- Green
 		fields,
 		"https://i.imgur.com/oc7sWCV.png",
@@ -153,16 +179,12 @@ end)
 RegisterServerEvent('aidoc:webhook:emergencyTransport')
 AddEventHandler('aidoc:webhook:emergencyTransport', function()
 	local src = source
-	local xPlayer = QBCore.Functions.GetPlayer(src)
-	local playerName = xPlayer.PlayerData.name
-	local charName = xPlayer.PlayerData.charinfo.firstname .. " " .. xPlayer.PlayerData.charinfo.lastname
-	local citizenid = xPlayer.PlayerData.citizenid
-	local job = xPlayer.PlayerData.job.label or "Unemployed"
+	local info = GetPlayerInfo(src)
 	
 	local fields = {
 		{
 			["name"] = "🆘 Critical Patient",
-			["value"] = "```\n" .. playerName .. "```\n**Character:** " .. charName .. "\n**Citizen ID:** `" .. citizenid .. "`\n**Job:** " .. job,
+			["value"] = "```\n" .. info.playerName .. "```\n**Character:** " .. info.charName .. "\n**Citizen ID:** `" .. info.citizenid .. "`\n**Job:** " .. info.job,
 			["inline"] = true
 		},
 		{
@@ -189,10 +211,30 @@ AddEventHandler('aidoc:webhook:emergencyTransport', function()
 	
 	SendWebhook(
 		"🚨 Emergency Transport",
-		"**" .. charName .. "** was emergency transported to hospital due to timeout.",
+		"**" .. info.charName .. "** was emergency transported to hospital due to timeout.",
 		15105570, -- Orange/Red
 		fields,
 		"https://i.imgur.com/oc7sWCV.png",
 		author
 	)
+end)
+
+local function CheckVersion()
+	PerformHttpRequest('https://raw.githubusercontent.com/GLDNRMZ/'..GetCurrentResourceName()..'/main/version.txt', function(err, text, headers)
+		local currentVersion = GetResourceMetadata(GetCurrentResourceName(), 'version')
+		if not text then 
+			print('^1[GLDNRMZ] Unable to check version for '..GetCurrentResourceName()..'^0')
+			return 
+		end
+		local result = text:gsub("\r", ""):gsub("\n", "")
+		if result ~= currentVersion then
+			print('^1[GLDNRMZ] '..GetCurrentResourceName()..' is out of date! Latest: '..result..' | Current: '..currentVersion..'^0')
+		else
+			print('^2[GLDNRMZ] '..GetCurrentResourceName()..' is up to date! ('..currentVersion..')^0')
+		end
+	end)
+end
+
+Citizen.CreateThread(function()
+	CheckVersion()
 end)

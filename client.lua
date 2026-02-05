@@ -1,4 +1,4 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+local Bridge = exports['community_bridge']:Bridge()
 
 local Active = false
 local Revived = false
@@ -13,40 +13,47 @@ local PRICE = Config.Price
 local lastDoctorTime = 0
 local sleep = 200
 
+local function DoRevive()
+    TriggerServerEvent('aidoc:server:revive')
+    return true
+end
+
 TriggerEvent('chat:addSuggestion', '/help', 'Call a Local Paramedic')
 RegisterCommand("help", function(source, args, raw)
-    local playerData = QBCore.Functions.GetPlayerData()
-
-    if not playerData.metadata["isdead"] and not playerData.metadata["inlaststand"] then
-        QBCore.Functions.Notify("This can only be used when dead", "error")
-		TriggerServerEvent("qb-log:server:CreateLog", "commands", "Help Command Fail", "red", "Player **".. playerData.name .. "** Character Name: **" .. playerData.charinfo["firstname"] .. " " .. playerData.charinfo["lastname"] .. "** attempted to use /help while not dead.")
+    if not Bridge.Framework.GetIsPlayerDead() then
+        Bridge.Notify.SendNotify("This can only be used when dead", "error")
         return
     end
 
-    if not playerData.metadata["injail"] then
-        QBCore.Functions.Notify("This can't be used when in jail", "error")
-        return
-    end
-
-    QBCore.Functions.TriggerCallback('lb:docOnline', function(EMSOnline, hasEnoughMoney)
-        if EMSOnline <= Config.Doctor --[[and hasEnoughMoney]] then
-            if not calledHelp then
-                calledHelp = true
-                Revived = false
-                lastDoctorTime = GetGameTimer()
-                QBCore.Functions.Notify("Paramedic is on its Way", "primary", 60000)
-                TriggerServerEvent("qb-log:server:CreateLog", "commands", "Help Command Success", "blue", "Player **".. playerData.name .. "** Character Name: **" .. playerData.charinfo["firstname"] .. " " .. playerData.charinfo["lastname"] .. "** used /help! A ambulance is on the way to revive them.")
-                TriggerServerEvent('aidoc:webhook:helpCalled')
-                SpawnVehicle(GetEntityCoords(PlayerPedId()))
-            else
-                QBCore.Functions.Notify("You've already called for help, please be patient", "error")
-            end
-        elseif EMSOnline > Config.Doctor then
-            QBCore.Functions.Notify("There are too many medics on duty", "error")
-        elseif not hasEnoughMoney then
-            QBCore.Functions.Notify("Not Enough Money", "error")
+    if Config.JailCheck.enabled then
+        local isJailed = false
+        if Bridge.Framework.GetPlayerMetaData then
+            local ok, value = pcall(Bridge.Framework.GetPlayerMetaData, Config.JailCheck.key)
+            isJailed = ok and value or false
         end
-    end)
+        if isJailed then
+            Bridge.Notify.SendNotify("This can't be used when in jail", "error")
+            return
+        end
+    end
+
+    local EMSOnline, hasEnoughMoney = Bridge.Callback.Trigger('aidoc:docOnline')
+    if EMSOnline <= Config.Doctor --[[and hasEnoughMoney]] then
+        if not calledHelp then
+            calledHelp = true
+            Revived = false
+            lastDoctorTime = GetGameTimer()
+            Bridge.Notify.SendNotify("Paramedic is on its Way", "primary", 60000)
+            TriggerServerEvent('aidoc:webhook:helpCalled')
+            SpawnVehicle(GetEntityCoords(PlayerPedId()))
+        else
+            Bridge.Notify.SendNotify("You've already called for help, please be patient", "error")
+        end
+    elseif EMSOnline > Config.Doctor then
+        Bridge.Notify.SendNotify("There are too many medics on duty", "error")
+    elseif not hasEnoughMoney then
+        Bridge.Notify.SendNotify("Not Enough Money", "error")
+    end
 end)
 
 function SpawnVehicle(x, y, z)
@@ -124,7 +131,7 @@ function docEnRoute()
             DeleteEntity(ped2)
             
             -- First revive the player
-            TriggerEvent("wasabi_ambulance:revive")
+            DoRevive()
             TriggerServerEvent('lb:charge')
             StopScreenEffect('DeathFailOut')
             Wait(1000) -- Give time for revive to process
@@ -139,8 +146,8 @@ function docEnRoute()
             Wait(3000)
             ResetPedMovementClipset(playerPed, 1.0)
             
-            QBCore.Functions.Notify("Emergency services transported you to the hospital", "primary")
-            QBCore.Functions.Notify("Your treatment is done, you were charged: $"..Config.Price, "success")
+            Bridge.Notify.SendNotify("Emergency services transported you to the hospital", "primary")
+            Bridge.Notify.SendNotify("Your treatment is done, you were charged: $"..Config.Price, "success")
             TriggerServerEvent('aidoc:webhook:emergencyTransport')
             
             calledHelp = false
@@ -192,45 +199,52 @@ function DoctorNPC()
 	Wait(2000)
 	PlayAmbientSpeech1(ped2, "GENERIC_INSULT_HIGH", "SPEECH_PARAMS_FORCE", 3)
 
-	QBCore.Functions.Progressbar("revive_doc", "HANG IN THERE BUDDY!!", REVIVE_TIME, false, false, {
-		disableMovement = false,
-		disableCarMovement = false,
-		disableMouse = false,
-		disableCombat = true,
-	}, {}, {}, {}, function()
-		ClearPedTasks(ped1)
-		Wait(500)
-		
-		-- First revive the player
-		TriggerEvent("wasabi_ambulance:revive")
-		TriggerServerEvent('lb:charge')
-		StopScreenEffect('DeathFailOut')
-		Wait(1000) -- Give time for revive to process
-		
-		-- Now play wake up animation
-		local playerPed = PlayerPedId()
-		RequestAnimSet("move_m@drunk@verydrunk")
-		while not HasAnimSetLoaded("move_m@drunk@verydrunk") do
-			Wait(10)
-		end
-		SetPedMovementClipset(playerPed, "move_m@drunk@verydrunk", 1.0)
-		Wait(3000)
-		ResetPedMovementClipset(playerPed, 1.0)
-		
-		QBCore.Functions.Notify("Your treatment is done, you were charged: $"..Config.Price, "success")
-        TriggerServerEvent("qb-log:server:CreateLog", "commands", "Help Command Healed", "green", "Player **".. QBCore.Functions.GetPlayerData().name .. "** Character Name: **" .. QBCore.Functions.GetPlayerData().charinfo["firstname"] .. " " .. QBCore.Functions.GetPlayerData().charinfo["lastname"] .. "** was healed by the AI Doc.")
+    local success = Bridge.ProgressBar.Open({
+        duration = REVIVE_TIME,
+        label = "HANG IN THERE BUDDY!!",
+        useWhileDead = true,
+        canCancel = false,
+        disable = {
+            move = false,
+            car = false,
+            mouse = false,
+            combat = true
+        }
+    })
+
+    if success then
+        ClearPedTasks(ped1)
+        Wait(500)
+        
+        -- First revive the player
+        DoRevive()
+        TriggerServerEvent('lb:charge')
+        StopScreenEffect('DeathFailOut')
+        Wait(1000) -- Give time for revive to process
+        
+        -- Now play wake up animation
+        local playerPed = PlayerPedId()
+        RequestAnimSet("move_m@drunk@verydrunk")
+        while not HasAnimSetLoaded("move_m@drunk@verydrunk") do
+            Wait(10)
+        end
+        SetPedMovementClipset(playerPed, "move_m@drunk@verydrunk", 1.0)
+        Wait(3000)
+        ResetPedMovementClipset(playerPed, 1.0)
+        
+        Bridge.Notify.SendNotify("Your treatment is done, you were charged: $"..Config.Price, "success")
         TriggerServerEvent('aidoc:webhook:playerHealed')
         calledHelp = false
         Revived = true
 
-		--RemovePedElegantly(ped1)
-		TaskEnterVehicle(ped1, veh, 0, 2, 3.0, 1, 0)
-		TaskVehicleDriveWander(ped1, veh, 25.0, 524295)
-		Wait(20000)
-		DeleteEntity(veh)
-		DeleteEntity(ped1)
-		DeleteEntity(ped2)
-	end)
+        --RemovePedElegantly(ped1)
+        TaskEnterVehicle(ped1, veh, 0, 2, 3.0, 1, 0)
+        TaskVehicleDriveWander(ped1, veh, 25.0, 524295)
+        Wait(20000)
+        DeleteEntity(veh)
+        DeleteEntity(ped1)
+        DeleteEntity(ped2)
+    end
 end
 
 AddEventHandler('onResourceStop', function(resource)
