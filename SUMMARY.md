@@ -1,4 +1,4 @@
 # Table of contents
 
 * [GLDNRMZ-Scripts Docs](README.md)
-  * [AI-Doc](gldnrmz-scripts-docs/readme.md)
+  * [Page 1](gldnrmz-scripts-docs/page-1.md)
