@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'gldnrmz-aidoc'
 description 'AI paramedic that revives downed players when EMS is unavailable'
-version '2.0.0'
+version '2.1.0'
 authors 'GLDNRMZ#8700 / HHFW / Sanriku / amrclake'
 
 shared_scripts {
