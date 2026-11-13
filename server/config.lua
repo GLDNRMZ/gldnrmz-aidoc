@@ -5,17 +5,24 @@ ServerConfig = {}
 
 -- How the player is revived once treatment finishes. Runs on the server.
 -- Return false to signal failure (the player is not charged).
+-- Auto-detects the common ambulance scripts; replace it if yours isn't listed.
 ServerConfig.Revive = function(src)
-    TriggerClientEvent('wasabi_ambulance:revive', src)           -- wasabi_ambulance
-    -- TriggerClientEvent('hospital:client:Revive', src)         -- qb-ambulancejob / qbx_medical
-    -- TriggerClientEvent('esx_ambulancejob:revive', src)        -- esx_ambulancejob
-    -- return Bridge.Framework.RevivePlayer(src)                 -- community_bridge default for your framework
+    if GetResourceState('wasabi_ambulance') == 'started' then
+        TriggerClientEvent('wasabi_ambulance:revive', src)       -- wasabi_ambulance
+    elseif GetResourceState('esx_ambulancejob') == 'started' then
+        TriggerClientEvent('esx_ambulancejob:revive', src)       -- esx_ambulancejob
+    elseif GetResourceState('qbx_medical') == 'started' or GetResourceState('qb-ambulancejob') == 'started' then
+        TriggerClientEvent('hospital:client:Revive', src)        -- qbx_medical / qb-ambulancejob
+    else
+        return exports.community_bridge:Framework().RevivePlayer(src) -- community_bridge default for your framework
+    end
     return true
 end
 
 -- Verify on the server that the player is actually downed before serving them.
--- Uses community_bridge (framework metadata). Disable only if your ambulance
--- script does not set the framework's dead/laststand state.
+-- Uses community_bridge (framework metadata) plus the isDead / dead state bags
+-- set by esx_ambulancejob and wasabi_ambulance. Disable only if your ambulance
+-- script sets none of these.
 ServerConfig.VerifyDeadServerSide = true
 
 -- Block service for jailed players. Reads framework metadata `key` on the server.

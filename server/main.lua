@@ -54,6 +54,9 @@ end
 local warnedDeadCheck = false
 local function isDead(src)
     if not ServerConfig.VerifyDeadServerSide then return true end
+    -- esx_ambulancejob sets state.isDead, wasabi_ambulance sets state.dead
+    local bag = Player(src).state
+    if bag.isDead or bag.dead then return true end
     local ok, dead = pcall(Bridge.Framework.GetIsPlayerDead, src)
     if not ok then
         -- Framework module doesn't support it: don't lock players out.

@@ -1,4 +1,18 @@
 local Bridge = exports['community_bridge']:Bridge()
+
+---Downed on any framework: community_bridge metadata, the isDead / dead state bags
+---(esx_ambulancejob, wasabi_ambulance), ESX's own dead flag, or a dead ped.
+local function isDowned()
+    local ok, dead = pcall(Bridge.Framework.GetIsPlayerDead)
+    if ok and dead then return true end
+    local bag = LocalPlayer.state
+    if bag.isDead or bag.dead then return true end
+    if GetResourceState('es_extended') == 'started' then
+        local okEsx, esxDead = pcall(function() return exports.es_extended:getSharedObject().PlayerData.dead end)
+        if okEsx and esxDead then return true end
+    end
+    return IsEntityDead(PlayerPedId())
+end
 local L = Config.Locale
 
 local CPR_DICT, CPR_ANIM = 'mini@cpr@char_a@cpr_str', 'cpr_pumpchest'
@@ -388,7 +402,7 @@ local function runService(id)
         local playerPos = GetEntityCoords(playerPed)
         local elapsed = elapsedSeconds()
 
-        if not Bridge.Framework.GetIsPlayerDead() then
+        if not isDowned() then
             cancelService('revived_elsewhere')
             return
         end
@@ -451,7 +465,7 @@ local function requestService()
         return false
     end
 
-    if not Bridge.Framework.GetIsPlayerDead() then
+    if not isDowned() then
         notify(L.not_dead, 'error')
         return false
     end
