@@ -5,7 +5,7 @@ AI paramedic for FiveM. When a player is downed and too few EMS are on duty, `/h
 
 Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/community_bridge) (QBCore, Qbox, ESX).
 
-## Features
+## ✨ Features
 - NPC ambulance and crew drive to the player, walk over and perform CPR
 - Stuck ambulances are moved next to the player, then the medic is placed beside them as a last resort
 - Emergency transport to the nearest configured hospital after a timeout
@@ -14,13 +14,13 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
 - Discord logging, configured server-side so the URL never reaches clients
 - Exports for radial menus, EMS scripts and other resources
 
-## Requirements
+## 📦 Requirements
 | Dependency       | Required |
 |------------------|----------|
-| community_bridge **0.13.6+** | Yes      |
-| An ambulance/death script (wasabi_ambulance, qbx_medical, esx_ambulancejob, ...) | Yes |
+| [community_bridge](https://github.com/TheOrderFivem/community_bridge) **0.13.6+** | Yes      |
+| An ambulance/death script ([wasabi_ambulance](https://wasabiscripts.com), qbx_medical, esx_ambulancejob, ...) | Yes |
 
-## Installation
+## ⚡ Installation
 1. Place the resource in your resources folder.
 2. In `server.cfg`, start it after `community_bridge` and set the webhook (optional):
    ```cfg
@@ -33,7 +33,7 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
 3. Check the revive call in `server/config.lua` (`ServerConfig.Revive`). It detects wasabi_ambulance, esx_ambulancejob, qbx_medical and qb-ambulancejob automatically and falls back to community_bridge; replace it only if you use another ambulance script.
 4. Adjust `config.lua`.
 
-## Configuration
+## ⚙️ Configuration
 | File | Sent to clients | Contains |
 |------|-----------------|----------|
 | `config.lua` | Yes | Command, prices, timings, models, hospitals, text |
@@ -67,7 +67,7 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
 | `Webhook` | Bot name, images, footer, colours. URL comes from the `gldnrmz_aidoc_webhook` convar |
 | `VersionCheck` | Print a notice when a newer version exists |
 
-## Exports
+## 🔌 Exports
 ### Client
 ```lua
 exports['gldnrmz-aidoc']:RequestService()  -- same as /help, returns boolean
@@ -83,7 +83,7 @@ exports['gldnrmz-aidoc']:GetOnDutyEMSCount()      -- number
 exports['gldnrmz-aidoc']:CancelService(src)       -- boolean, e.g. when real EMS takes over
 ```
 
-## Events
+## 🔌 Events
 Server-side, local only (`AddEventHandler`, not net):
 ```lua
 AddEventHandler('gldnrmz-aidoc:server:serviceCompleted', function(src, method, amountCharged)
@@ -91,7 +91,7 @@ AddEventHandler('gldnrmz-aidoc:server:serviceCompleted', function(src, method, a
 end)
 ```
 
-## Troubleshooting
+## ❗ Troubleshooting
 | Issue | Fix |
 |-------|-----|
 | "This can only be used when you are downed" while dead | Your ambulance script sets none of: framework death metadata, the `isDead` / `dead` state bag. Set `ServerConfig.VerifyDeadServerSide = false` |
@@ -100,10 +100,23 @@ end)
 | Society not paid | Enable `ServerConfig.Society` and check `DepositSociety` matches your banking resource |
 | Need more detail | `Config.Debug = true` |
 
-## Changes in 2.1.0
+## 🆕 Changes in 2.1.0
 - Downed players are detected on ESX (esx_ambulancejob) and with wasabi_ambulance through their state bags.
 - `ServerConfig.Revive` picks the right revive for the ambulance script you run.
 
-## Credit
+## 🙏 Credit
 - Original authors: GLDNRMZ#8700 / HHFW / Sanriku / amrclake
 - Attribution required. Do not redistribute or sell without explicit permission. Keep all author credits intact.
+
+<!-- gldnrmz-links -->
+---
+
+## 🔗 Links
+
+<p align="center">
+  <a href="https://discord.gg/7YHJ7774jA"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://forum.cfx.re/u/gldnrmz/summary"><img src="https://img.shields.io/badge/Cfx.re-F40552?style=for-the-badge&logoColor=white" alt="Cfx.re forum" /></a>
+  <a href="https://5metrics.dev/resources?search=gldnrmz"><img src="https://img.shields.io/badge/5Metrics-00BFFF?style=for-the-badge&logoColor=white" alt="5Metrics" /></a>
+  <a href="https://gldnrmz.tebex.io"><img src="https://img.shields.io/badge/Tebex-FFD700?style=for-the-badge&logoColor=black" alt="Tebex store" /></a>
+  <a href="https://www.buymeacoffee.com/gldnrmz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FF813F?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="Buy me a coffee" /></a>
+</p>
