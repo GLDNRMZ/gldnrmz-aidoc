@@ -17,7 +17,7 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
 ## Requirements
 | Dependency       | Required |
 |------------------|----------|
-| community_bridge | Yes      |
+| community_bridge **0.13.6+** | Yes      |
 | An ambulance/death script (wasabi_ambulance, qbx_medical, esx_ambulancejob, ...) | Yes |
 
 ## Installation
@@ -30,7 +30,7 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
    # use `set`, not `setr` (setr sends the value to every client)
    set gldnrmz_aidoc_webhook "https://discord.com/api/webhooks/..."
    ```
-3. Set your ambulance script's revive call in `server/config.lua` (`ServerConfig.Revive`).
+3. Check the revive call in `server/config.lua` (`ServerConfig.Revive`). It detects wasabi_ambulance, esx_ambulancejob, qbx_medical and qb-ambulancejob automatically and falls back to community_bridge; replace it only if you use another ambulance script.
 4. Adjust `config.lua`.
 
 ## Configuration
@@ -60,8 +60,8 @@ Framework-agnostic through [community_bridge](https://github.com/TheOrderFivem/c
 ### `server/config.lua`
 | Field | Description |
 |-------|-------------|
-| `Revive(src)` | Revives the player. Examples for wasabi, qb/qbx and esx are included |
-| `VerifyDeadServerSide` | Check framework death state on the server |
+| `Revive(src)` | Revives the player. Detects wasabi_ambulance, esx_ambulancejob, qbx_medical and qb-ambulancejob; otherwise uses community_bridge |
+| `VerifyDeadServerSide` | Check death state on the server (framework metadata, or the `isDead` / `dead` state bags from esx_ambulancejob / wasabi_ambulance) |
 | `JailCheck` | `{ enabled, key }`, framework metadata key |
 | `Society` / `DepositSociety` | Pay the fee into a job account |
 | `Webhook` | Bot name, images, footer, colours. URL comes from the `gldnrmz_aidoc_webhook` convar |
@@ -94,11 +94,15 @@ end)
 ## Troubleshooting
 | Issue | Fix |
 |-------|-----|
-| "This can only be used when you are downed" while dead | Your ambulance script doesn't set framework death metadata: set `ServerConfig.VerifyDeadServerSide = false` |
+| "This can only be used when you are downed" while dead | Your ambulance script sets none of: framework death metadata, the `isDead` / `dead` state bag. Set `ServerConfig.VerifyDeadServerSide = false` |
 | Player not revived | Set the correct call in `ServerConfig.Revive` |
 | No Discord logs | Check the `gldnrmz_aidoc_webhook` convar and the server console for HTTP errors |
 | Society not paid | Enable `ServerConfig.Society` and check `DepositSociety` matches your banking resource |
 | Need more detail | `Config.Debug = true` |
+
+## Changes in 2.1.0
+- Downed players are detected on ESX (esx_ambulancejob) and with wasabi_ambulance through their state bags.
+- `ServerConfig.Revive` picks the right revive for the ambulance script you run.
 
 ## Credit
 - Original authors: GLDNRMZ#8700 / HHFW / Sanriku / amrclake
